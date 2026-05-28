@@ -1,0 +1,416 @@
+---
+// Assessment.astro — Likert-scale (1–5) self-scoring assessment with multiple
+// sections, per-section bands, and "primary constraint" identification.
+// Replaces the multiple-choice Quiz component on chapters that use the
+// Right-Sized Framework executive self-assessment.
+
+interface Band {
+  min: number;        // inclusive
+  max: number;        // inclusive
+  label: string;      // e.g. "Top 25%"
+  text: string;       // narrative description
+}
+
+interface Section {
+  title: string;      // e.g. "Section 1: Product–Market Fit (PMF)"
+  shortTitle?: string;// e.g. "PMF" — used in the executive summary
+  max: number;        // total points possible (questions.length * 5)
+  bands: Band[];      // 3 bands typically (top / mid / bottom)
+  questions: string[];
+}
+
+interface Props {
+  assessmentId: string;
+  eyebrow?: string;
+  heading: string;
+  intro?: string;
+  scaleNote?: string;
+  externalUrl?: string;   // "you can also take this at ..." link
+  image?: string;
+  imageAlt?: string;
+  sections: Section[];
+}
+
+const {
+  assessmentId,
+  eyebrow = 'Self-Assessment',
+  heading,
+  intro,
+  scaleNote = '1 = Never true · 2 = Rarely · 3 = Sometimes · 4 = Often · 5 = Consistently',
+  externalUrl,
+  image,
+  imageAlt = '',
+  sections,
+} = Astro.props;
+
+// Compute a flat question numbering for display (1..N across all sections).
+let runningQNum = 0;
+const numbered = sections.map(s => {
+  const start = runningQNum + 1;
+  runningQNum += s.questions.length;
+  return { ...s, startNumber: start };
+});
+---
+
+<section class="assessment section" id={`assessment-${assessmentId}`}>
+  <div class="container">
+    <div class="assessment-head">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+      {intro && <p class="lead">{intro}</p>}
+      {externalUrl && (
+        <p class="external-note">
+          You can also take this at <a href={externalUrl} target="_blank" rel="noopener">{externalUrl.replace(/^https?:\/\//, '')}</a>.
+        </p>
+      )}
+      <p class="scale-note">{scaleNote} — answer honestly. This is a mirror, not a report card.</p>
+    </div>
+
+    {image && (
+      <figure class="assessment-figure">
+        <img src={image} alt={imageAlt} />
+      </figure>
+    )}
+
+    <form class="assessment-form" data-assessment-id={assessmentId} novalidate>
+      {numbered.map((section, si) => (
+        <fieldset class="a-section" data-section={si}>
+          <legend>
+            <span class="section-title">{section.title}</span>
+            <span class="section-max">Total possible: {section.max}</span>
+          </legend>
+
+          {section.questions.map((q, qi) => (
+            <div class="a-question" data-q={qi}>
+              <p class="a-q-text">{section.startNumber + qi}. {q}</p>
+              <div class="scale-row" role="radiogroup" aria-label={`Rate: ${q}`}>
+                {[1, 2, 3, 4, 5].map(v => (
+                  <label class="scale-option">
+                    <input type="radio" name={`a-${assessmentId}-${si}-${qi}`} value={v} />
+                    <span>{v}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </fieldset>
+      ))}
+
+      <div class="a-actions">
+        <button type="submit" class="btn btn-copper">Score Assessment</button>
+        <button type="reset" class="btn btn-ghost">Reset</button>
+      </div>
+
+      <div class="a-results" hidden aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<script
+  type="application/json"
+  id={`assessment-data-${assessmentId}`}
+  set:html={JSON.stringify({
+    sections: sections.map(s => ({
+      title: s.shortTitle || s.title.replace(/^Section\s+\d+:\s*/i, ''),
+      max: s.max,
+      bands: s.bands,
+      qCount: s.questions.length,
+    })),
+  })}
+/>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('form.assessment-form').forEach((form) => {
+    const id = form.dataset.assessmentId!;
+    const dataEl = document.getElementById(`assessment-data-${id}`);
+    if (!dataEl) return;
+    const { sections } = JSON.parse(dataEl.textContent || '{}') as {
+      sections: { title: string; max: number; qCount: number; bands: { min: number; max: number; label: string; text: string }[] }[];
+    };
+
+    const resultsBox = form.querySelector<HTMLDivElement>('.a-results')!;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const sectionResults: { title: string; score: number; max: number; band: string; detail: string }[] = [];
+      let incomplete = false;
+
+      sections.forEach((sec, si) => {
+        let total = 0;
+        for (let qi = 0; qi < sec.qCount; qi++) {
+          const checked = form.querySelector<HTMLInputElement>(`input[name="a-${id}-${si}-${qi}"]:checked`);
+          if (!checked) {
+            incomplete = true;
+          } else {
+            total += Number(checked.value);
+          }
+        }
+        const band = sec.bands.find(b => total >= b.min && total <= b.max);
+        sectionResults.push({
+          title: sec.title,
+          score: total,
+          max: sec.max,
+          band: band ? band.label : 'Unscored',
+          detail: band ? band.text : '',
+        });
+      });
+
+      if (incomplete) {
+        resultsBox.hidden = false;
+        resultsBox.innerHTML = `
+          <div class="result-card incomplete">
+            <h3>Assessment Incomplete</h3>
+            <p>Please answer every statement before scoring.</p>
+          </div>`;
+        resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+
+      // Lowest-scoring section becomes the "primary constraint"
+      const lowest = sectionResults.reduce((a, b) => (a.score <= b.score ? a : b));
+
+      resultsBox.hidden = false;
+      resultsBox.innerHTML = `
+        <div class="result-card">
+          <h3>Executive Summary</h3>
+          <ul class="result-list">
+            ${sectionResults.map(r => `
+              <li class="${r === lowest ? 'is-lowest' : ''}">
+                <div class="r-title">${escapeHtml(r.title)}</div>
+                <div class="r-score">${r.score} / ${r.max}</div>
+                <div class="r-band">${escapeHtml(r.band)} — ${escapeHtml(r.detail)}</div>
+              </li>
+            `).join('')}
+          </ul>
+
+          <div class="result-constraint">
+            <p class="constraint-label">Primary Constraint</p>
+            <p class="constraint-body">
+              <strong>${escapeHtml(lowest.title)}</strong> is your lowest-scoring dimension.
+              In most cases, this is the structural constraint most worth addressing first.
+            </p>
+          </div>
+
+          <div class="result-next">
+            <h4>What to do next</h4>
+            <ol>
+              <li>Identify your lowest-scoring dimension (done — see above).</li>
+              <li>Mark it as your primary constraint.</li>
+              <li>Turn to the corresponding chapters and apply the tools.</li>
+            </ol>
+            <p class="result-coda">
+              Growth rarely requires fixing everything. It requires strengthening the weakest structural link.
+              Progress is not accidental. It is structured.
+            </p>
+          </div>
+        </div>`;
+      resultsBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    form.addEventListener('reset', () => {
+      resultsBox.hidden = true;
+      resultsBox.innerHTML = '';
+      form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    function escapeHtml(s: string): string {
+      return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+    }
+  });
+</script>
+
+<style>
+  .assessment {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .assessment-head { max-width: 46rem; margin-bottom: 1.5rem; }
+  .external-note { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+  .scale-note {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--paper-deep);
+    border-left: 3px solid var(--copper);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .assessment-figure {
+    margin: 0 0 2rem;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    max-height: 22rem;
+  }
+  .assessment-figure img { width: 100%; height: 100%; object-fit: cover; }
+
+  .assessment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .a-section {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin: 0;
+  }
+  .a-section legend {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    width: 100%;
+    padding: 0 0 0.75rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .section-max {
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .a-question {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--paper-deep);
+  }
+  .a-question:first-of-type { border-top: 0; padding-top: 0.5rem; }
+
+  .a-q-text {
+    margin: 0;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .scale-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .scale-option {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.4rem 0.55rem;
+    border-radius: 4px;
+    transition: background 120ms;
+  }
+  .scale-option:hover { background: var(--paper-deep); }
+  .scale-option input { accent-color: var(--copper); cursor: pointer; }
+
+  .a-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Results */
+  .a-results { margin-top: 1.5rem; }
+  .result-card {
+    background: var(--surface-contrast);
+    color: var(--on-surface-contrast);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-2);
+  }
+  .result-card h3 {
+    color: var(--copper);
+    margin: 0 0 1.25rem;
+    font-size: var(--step-2);
+    font-family: var(--font-display);
+  }
+  .result-card.incomplete { background: rgba(199,111,50,0.95); color: var(--on-surface-contrast); }
+  .result-card.incomplete h3 { color: var(--on-surface-contrast); }
+
+  .result-list { list-style: none; margin: 0 0 1.5rem; padding: 0; }
+  .result-list li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.5rem;
+    background: rgba(247,243,234,0.06);
+    border-left: 3px solid transparent;
+    border-radius: var(--radius);
+  }
+  .result-list li.is-lowest {
+    background: rgba(199,111,50,0.15);
+    border-left-color: var(--copper);
+  }
+  .r-title {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    color: var(--on-surface-contrast);
+  }
+  .r-score {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--copper);
+    font-size: var(--step-1);
+  }
+  .r-band {
+    grid-column: 1 / -1;
+    font-size: 0.92rem;
+    color: rgba(247,243,234,0.78);
+    line-height: 1.5;
+  }
+
+  .result-constraint {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: rgba(199,111,50,0.18);
+    border: 1px solid rgba(199,111,50,0.5);
+    border-radius: var(--radius);
+  }
+  .constraint-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--copper);
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .constraint-body { margin: 0; line-height: 1.55; color: var(--on-surface-contrast); }
+
+  .result-next h4 {
+    color: var(--copper);
+    margin: 0 0 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+  }
+  .result-next ol { padding-left: 1.25rem; }
+  .result-next li { margin-bottom: 0.4rem; color: rgba(247,243,234,0.9); }
+  .result-coda {
+    margin-top: 1rem;
+    font-style: italic;
+    color: rgba(247,243,234,0.75);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 700px) {
+    .a-question { grid-template-columns: 1fr; gap: 0.5rem; }
+    .a-section legend { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+    .result-list li { grid-template-columns: 1fr; }
+    .r-score { justify-self: start; }
+  }
+</style>

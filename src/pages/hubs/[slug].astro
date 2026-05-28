@@ -1,0 +1,31 @@
+---
+// src/pages/hubs/[slug].astro
+// One file → 12 Innovation Hub pages, same layout as chapters.
+
+import ChapterPage from '../../layouts/ChapterPage.astro';
+import { hubs } from '../../data/hubs';
+import { getHubContent } from '../../content/hubs';
+
+export function getStaticPaths() {
+  return hubs.map(h => ({ params: { slug: h.slug } }));
+}
+
+const { slug } = Astro.params;
+const meta = hubs.find(h => h.slug === slug)!;
+const content = getHubContent(meta.slug);
+---
+
+<ChapterPage
+  eyebrow={content.eyebrow ?? 'Innovation Hub'}
+  title={content.title}
+  dek={content.dek}
+  buttons={content.buttons}
+  hero={content.hero}
+  actionPlan={content.actionPlan}
+  tools={content.tools}
+  quiz={content.quiz}
+  assessment={content.assessment}
+  references={content.references}
+  description={content.description}
+  noindex={content.noindex}
+/>

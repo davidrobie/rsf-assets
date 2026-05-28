@@ -1,0 +1,100 @@
+---
+// References.astro — bibliography and further reading
+interface Reference {
+  title: string;
+  authors?: string;
+  source?: string;     // journal/publisher/year
+  url?: string;
+  type?: 'book' | 'article' | 'video' | 'tool' | 'other';
+}
+interface Props {
+  eyebrow?: string;
+  heading?: string;
+  references: Reference[];
+}
+const {
+  eyebrow = 'References & Further Study',
+  heading = 'Go Deeper',
+  references,
+} = Astro.props;
+---
+
+{references && references.length > 0 && (
+  <section class="refs section">
+    <div class="container container-narrow">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+
+      <ul class="ref-list">
+        {references.map(r => (
+          <li class="ref-item">
+            {r.type && <span class={`ref-type ref-type-${r.type}`}>{r.type}</span>}
+            <div class="ref-body">
+              {r.url ? (
+                <a href={r.url} target="_blank" rel="noopener" class="ref-title">{r.title}</a>
+              ) : (
+                <span class="ref-title">{r.title}</span>
+              )}
+              {(r.authors || r.source) && (
+                <p class="ref-meta">
+                  {r.authors && <span>{r.authors}</span>}
+                  {r.authors && r.source && <span aria-hidden="true"> · </span>}
+                  {r.source && <em>{r.source}</em>}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+
+<style>
+  .refs h2 { margin-top: 0.3rem; }
+  .ref-list {
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .ref-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .ref-item:last-child { border-bottom: 1px solid var(--rule); }
+
+  .ref-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+    height: fit-content;
+    background: var(--paper-deep);
+    color: var(--ink);
+    flex-shrink: 0;
+  }
+  .ref-type-book    { background: var(--surface-contrast); color: var(--on-surface-contrast); }
+  .ref-type-article { background: var(--copper); color: var(--on-surface-contrast); }
+  .ref-type-video   { background: #5C4B8A; color: var(--on-surface-contrast); }
+  .ref-type-tool    { background: var(--success); color: var(--on-surface-contrast); }
+
+  .ref-title {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .ref-meta {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0.3rem 0 0;
+  }
+</style>

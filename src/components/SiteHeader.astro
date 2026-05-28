@@ -1,0 +1,267 @@
+---
+// SiteHeader.astro — sticky top nav matching the original RSF structure
+import { chapters } from '../data/chapters';
+import { hubs } from '../data/hubs';
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<header class="site-header">
+  <div class="container header-row">
+    <a href="/" class="brand" aria-label="Right-Sized Framework home">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">
+        <span class="brand-line-1">Right-Sized</span>
+        <span class="brand-line-2">Framework™</span>
+      </span>
+    </a>
+
+    <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav id="primary-nav" class="primary-nav" aria-label="Primary">
+      <ul>
+        <li><a href="/" class:list={[{ active: pathname === '/' }]}>Home</a></li>
+
+        <li class="has-menu">
+          <button class="menu-trigger" aria-expanded="false">Step Inside <span aria-hidden="true">▾</span></button>
+          <ul class="submenu">
+            {chapters.map(c => (
+              <li><a href={`/chapters/${c.slug}/`}>{c.shortTitle || c.title}</a></li>
+            ))}
+          </ul>
+        </li>
+
+        <li class="has-menu">
+          <button class="menu-trigger" aria-expanded="false">Innovation Hub <span aria-hidden="true">▾</span></button>
+          <ul class="submenu">
+            {hubs.map(h => (
+              <li><a href={`/hubs/${h.slug}/`}>{h.title}</a></li>
+            ))}
+          </ul>
+        </li>
+
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about/" class="nav-about">About</a></li>
+        <li><a href="/preorder/" class="btn btn-copper btn-sm">Preorder the Book</a></li>
+        <li class="theme-toggle-wrap">
+          <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+            {/* Moon — visible in light mode, click to go dark */}
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            {/* Sun — visible in dark mode, click to go light */}
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--header-bg);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-block: 0.75rem;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .brand-mark {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: grid;
+    place-items: center;
+    background: var(--surface-contrast);
+    color: var(--on-surface-contrast);
+    border-radius: 50%;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.3rem;
+    font-variation-settings: 'SOFT' 100;
+  }
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+  }
+  .brand-line-1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+  .brand-line-2 {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .primary-nav ul {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .primary-nav a,
+  .menu-trigger {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--ink);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 0.4rem 0;
+    font-weight: 500;
+  }
+  .primary-nav a:hover,
+  .menu-trigger:hover { color: var(--copper-dark); }
+  .primary-nav a.active {
+    border-bottom: 2px solid var(--copper);
+  }
+
+  .has-menu { position: relative; }
+  .submenu {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 18rem;
+    background: var(--surface-card);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow-2);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+  .submenu li { list-style: none; }
+  .submenu a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.92rem;
+    border-radius: 3px;
+  }
+  .submenu a:hover { background: var(--paper-deep); }
+  .has-menu:hover .submenu,
+  .has-menu:focus-within .submenu { display: flex; }
+
+  .btn-sm { padding: 0.5rem 0.9rem; font-size: 0.88rem; }
+
+  /* Theme toggle button */
+  .theme-toggle-wrap { display: flex; align-items: center; }
+  .theme-toggle {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+    padding: 0;
+  }
+  .theme-toggle:hover {
+    background: var(--paper-deep);
+    border-color: var(--copper);
+    color: var(--copper);
+  }
+  .theme-icon { width: 1.05rem; height: 1.05rem; }
+  /* Light mode: show moon (click to go dark). Dark mode: show sun (click to go light). */
+  .theme-icon-sun { display: none; }
+  .theme-icon-moon { display: block; }
+  :global([data-theme="dark"]) .theme-icon-sun { display: block; }
+  :global([data-theme="dark"]) .theme-icon-moon { display: none; }
+
+  /* mobile toggle */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 0.4rem;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--ink);
+  }
+
+  @media (max-width: 960px) {
+    .nav-toggle { display: flex; }
+    .primary-nav {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--rule);
+      padding: 1rem var(--gutter);
+      display: none;
+    }
+    .primary-nav.open { display: block; }
+    .primary-nav ul {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.25rem;
+    }
+    .submenu {
+      position: static;
+      box-shadow: none;
+      border: 0;
+      padding-left: 1rem;
+      display: flex;
+    }
+    .menu-trigger { width: 100%; text-align: left; }
+  }
+</style>
+
+<script>
+  // Mobile nav toggle
+  const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+  const nav = document.getElementById('primary-nav');
+  toggle?.addEventListener('click', () => {
+    const open = nav?.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(!!open));
+  });
+
+  // Theme toggle (light ↔ dark) — persists to localStorage under 'rsf-theme'.
+  // The initial theme is set by an inline script in BaseLayout's <head> before paint.
+  const themeBtn = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  themeBtn?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('rsf-theme', next); } catch (e) { /* private mode, etc. */ }
+  });
+</script>

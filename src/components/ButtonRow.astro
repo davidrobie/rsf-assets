@@ -1,0 +1,39 @@
+---
+// ButtonRow.astro
+interface Button {
+  label: string;
+  href: string;
+  variant?: 'primary' | 'ghost' | 'copper';
+  newTab?: boolean;
+}
+interface Props { buttons: Button[]; }
+const { buttons } = Astro.props;
+---
+
+{buttons && buttons.length > 0 && (
+  <section class="button-row">
+    <div class="container container-narrow">
+      <div class="row">
+        {buttons.map(b => (
+          <a
+            href={b.href}
+            class:list={['btn', b.variant === 'ghost' ? 'btn-ghost' : b.variant === 'copper' ? 'btn-copper' : '']}
+            target={b.newTab ? '_blank' : undefined}
+            rel={b.newTab ? 'noopener' : undefined}
+          >
+            {b.label}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .button-row { padding-block: 1.25rem 0.5rem; }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

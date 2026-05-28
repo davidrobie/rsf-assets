@@ -1,0 +1,92 @@
+---
+// ActionPlan.astro — two-column body with an image
+interface Props {
+  eyebrow?: string;
+  heading: string;
+  columnLeftTitle?: string;
+  columnRightTitle?: string;
+  columnLeft?: string;  // markdown-ish HTML string OR pass slot
+  columnRight?: string;
+  image?: string;
+  imageAlt?: string;
+  imagePosition?: 'top' | 'between' | 'bottom';
+}
+const {
+  eyebrow = 'Action Plan',
+  heading,
+  columnLeftTitle,
+  columnRightTitle,
+  columnLeft,
+  columnRight,
+  image,
+  imageAlt = '',
+  imagePosition = 'top',
+} = Astro.props;
+---
+
+<section class="action-plan section">
+  <div class="container">
+    <header class="ap-head">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+    </header>
+
+    {image && imagePosition === 'top' && (
+      <figure class="ap-figure">
+        <img src={image} alt={imageAlt} />
+      </figure>
+    )}
+
+    <div class="ap-columns">
+      <div class="ap-col">
+        {columnLeftTitle && <h3>{columnLeftTitle}</h3>}
+        {columnLeft ? <Fragment set:html={columnLeft} /> : <slot name="left" />}
+      </div>
+      <div class="ap-col">
+        {columnRightTitle && <h3>{columnRightTitle}</h3>}
+        {columnRight ? <Fragment set:html={columnRight} /> : <slot name="right" />}
+      </div>
+    </div>
+
+    {image && imagePosition === 'bottom' && (
+      <figure class="ap-figure ap-figure-bottom">
+        <img src={image} alt={imageAlt} />
+      </figure>
+    )}
+  </div>
+</section>
+
+<style>
+  .action-plan {
+    background:
+      linear-gradient(180deg, transparent, var(--paper-deep) 40%, var(--paper-deep) 60%, transparent);
+  }
+  .ap-head { max-width: 42rem; margin-bottom: 2rem; }
+  .ap-head h2 { margin-top: 0.3rem; }
+  .ap-figure {
+    margin: 0 0 2rem;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+  }
+  .ap-figure-bottom { margin: 2rem 0 0; }
+  .ap-figure img { width: 100%; height: auto; }
+
+  .ap-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+  .ap-col h3 {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    margin-bottom: 0.6rem;
+  }
+  .ap-col :global(p) { margin-bottom: 1em; }
+  .ap-col :global(ul), .ap-col :global(ol) { padding-left: 1.2rem; margin-bottom: 1em; }
+  .ap-col :global(li) { margin-bottom: 0.4rem; }
+
+  @media (max-width: 720px) {
+    .ap-columns { grid-template-columns: 1fr; }
+  }
+</style>

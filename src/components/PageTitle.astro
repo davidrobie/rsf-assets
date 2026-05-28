@@ -1,0 +1,26 @@
+---
+// PageTitle.astro
+interface Props {
+  eyebrow?: string;
+  title: string;
+  dek?: string;
+  align?: 'left' | 'center';
+}
+const { eyebrow, title, dek, align = 'left' } = Astro.props;
+---
+
+<section class="page-title section-tight" data-align={align}>
+  <div class="container container-narrow">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h1>{title}</h1>
+    {dek && <p class="lead">{dek}</p>}
+  </div>
+</section>
+
+<style>
+  .page-title { padding-top: clamp(2rem, 6vw, 4rem); padding-bottom: 0; }
+  [data-align="center"] { text-align: center; }
+  h1 { margin-top: 0.4rem; }
+  .lead { margin-top: 1rem; max-width: 42rem; }
+  [data-align="center"] .lead { margin-inline: auto; }
+</style>

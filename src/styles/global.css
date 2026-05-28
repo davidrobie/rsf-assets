@@ -1,0 +1,266 @@
+/* ===========================================================
+   Right-Sized Framework — Global Styles
+   Editorial palette: midnight blue + cream paper + burnt copper
+   Typography: Fraunces (display serif) + Plus Jakarta Sans (sans)
+   =========================================================== */
+
+/* ---------- Design tokens ---------- */
+:root {
+  /* Colors — light theme defaults */
+  --ink:        #0B1F3A;   /* midnight blue, primary text & buttons */
+  --ink-soft:   #1F365B;
+  --paper:      #F7F3EA;   /* warm cream background */
+  --paper-deep: #ECE5D4;   /* slightly darker cream for surfaces */
+  --copper:     #C76F32;   /* burnt copper accent */
+  --copper-dark:#9E5523;
+  --charcoal:   #1A1A1A;
+  --muted:      #6B6B6B;
+  --rule:       #D9D2C0;   /* hairline borders */
+  --success:    #2F7D5B;
+  --error:      #B33A3A;
+
+  /* "Contrast surface" — the dark area used for footer, primary buttons,
+     CTAs, and result cards. Distinct from --ink so that in dark mode it can
+     stay a contrasting dark shade instead of flipping to cream. */
+  --surface-contrast:       #0B1F3A;
+  --on-surface-contrast:    #F7F3EA;
+  --surface-contrast-hover: #1F365B;
+  --surface-card:           #ffffff;     /* white cards on cream in light mode */
+
+  /* Header backdrop — used for sticky header background */
+  --header-bg: rgba(247, 243, 234, 0.92);
+
+  /* Typography */
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans:    'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Scale */
+  --step--1: clamp(0.83rem, 0.78rem + 0.2vw, 0.94rem);
+  --step-0:  clamp(1rem,   0.93rem + 0.3vw, 1.13rem);
+  --step-1:  clamp(1.2rem, 1.1rem + 0.5vw, 1.42rem);
+  --step-2:  clamp(1.44rem, 1.29rem + 0.8vw, 1.8rem);
+  --step-3:  clamp(1.73rem, 1.5rem + 1.2vw, 2.28rem);
+  --step-4:  clamp(2.07rem, 1.73rem + 1.8vw, 2.88rem);
+  --step-5:  clamp(2.49rem, 2rem + 2.6vw, 3.66rem);
+
+  /* Layout */
+  --container: 72rem;
+  --container-narrow: 56rem;
+  --gutter: clamp(1rem, 4vw, 2rem);
+
+  /* Radius / shadow */
+  --radius:   4px;
+  --radius-lg: 12px;
+  --shadow-1: 0 1px 2px rgba(11, 31, 58, 0.06), 0 2px 8px rgba(11, 31, 58, 0.04);
+  --shadow-2: 0 4px 14px rgba(11, 31, 58, 0.10), 0 12px 32px rgba(11, 31, 58, 0.08);
+
+  color-scheme: light;
+}
+
+/* ---------- Dark theme tokens ----------
+   Activated when [data-theme="dark"] is on <html> (set by inline script in
+   BaseLayout based on saved preference or system pref). */
+[data-theme="dark"] {
+  --ink:        #F0E8D6;   /* text becomes warm cream */
+  --ink-soft:   #C8C0AE;   /* secondary text */
+  --paper:      #0E1828;   /* page bg becomes deep navy */
+  --paper-deep: #18243B;   /* elevated surfaces */
+  --copper:     #DE7E3D;   /* slightly brighter copper for AA contrast on dark */
+  --copper-dark:#EF9152;
+  --charcoal:   #F0E8D6;   /* body text becomes cream */
+  --muted:      #8B97AB;
+  --rule:       #283449;
+  --success:    #5BAF87;
+  --error:      #E07474;
+
+  --surface-contrast:       #050B14;     /* even deeper than page bg */
+  --on-surface-contrast:    #F7F3EA;
+  --surface-contrast-hover: #0E1828;
+  --surface-card:           #18243B;     /* card bg on dark theme */
+
+  --header-bg: rgba(14, 24, 40, 0.92);
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-2: 0 4px 14px rgba(0,0,0,0.5), 0 12px 32px rgba(0,0,0,0.4);
+
+  color-scheme: dark;
+}
+
+/* If JS hasn't run yet (or is disabled) and the OS prefers dark, fall back
+   to dark anyway so we don't flash light. The inline script in BaseLayout
+   will set an explicit data-theme almost immediately. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --ink:        #F0E8D6;
+    --ink-soft:   #C8C0AE;
+    --paper:      #0E1828;
+    --paper-deep: #18243B;
+    --copper:     #DE7E3D;
+    --copper-dark:#EF9152;
+    --charcoal:   #F0E8D6;
+    --muted:      #8B97AB;
+    --rule:       #283449;
+    --surface-contrast:    #050B14;
+    --on-surface-contrast: #F7F3EA;
+    --surface-contrast-hover: #0E1828;
+    --surface-card:        #18243B;
+    --header-bg: rgba(14, 24, 40, 0.92);
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--charcoal);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, svg, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--copper);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  transition: color 120ms ease;
+}
+a:hover { color: var(--copper-dark); }
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5em 0;
+  font-variation-settings: 'SOFT' 30, 'WONK' 0;
+}
+h1 { font-size: var(--step-5); font-weight: 600; }
+h2 { font-size: var(--step-3); }
+h3 { font-size: var(--step-2); }
+h4 { font-size: var(--step-1); font-weight: 600; }
+
+p { margin: 0 0 1em 0; }
+
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.lead {
+  font-size: var(--step-1);
+  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* ---------- Layout helpers ---------- */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.container-narrow {
+  max-width: var(--container-narrow);
+}
+
+.section {
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+.section-tight { padding-block: clamp(2rem, 5vw, 3.5rem); }
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 0;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--step-0);
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--surface-contrast);
+  background: var(--surface-contrast);
+  color: var(--on-surface-contrast);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, color 120ms ease;
+}
+.btn:hover {
+  background: var(--surface-contrast-hover);
+  border-color: var(--surface-contrast-hover);
+  color: var(--on-surface-contrast);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.btn-ghost:hover { background: var(--surface-contrast); color: var(--on-surface-contrast); border-color: var(--surface-contrast); }
+
+.btn-copper {
+  background: var(--copper);
+  border-color: var(--copper);
+  color: #fff;
+}
+.btn-copper:hover { background: var(--copper-dark); border-color: var(--copper-dark); color: #fff; }
+
+/* ---------- Focus ring ---------- */
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- Skip link for a11y ---------- */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  background: var(--surface-contrast);
+  color: var(--on-surface-contrast);
+  padding: 0.5rem 0.8rem;
+  z-index: 100;
+}

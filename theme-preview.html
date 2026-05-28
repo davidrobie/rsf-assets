@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RSF — Light vs Dark mode preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #111; color: #eee; }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 1.5rem; background: #000;
+    border-bottom: 1px solid #333;
+  }
+  .toolbar h1 { font-size: 1rem; margin: 0; font-weight: 600; letter-spacing: 0.05em; }
+  .toolbar .hint { font-size: 0.82rem; color: #999; }
+  .toggle-buttons { display: flex; gap: 0.5rem; }
+  .toggle-buttons button {
+    background: #222; color: #ddd; border: 1px solid #444; padding: 0.4rem 0.9rem;
+    border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-family: inherit;
+  }
+  .toggle-buttons button.active { background: #fff; color: #000; border-color: #fff; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 50px); }
+  .panel { overflow-y: auto; max-height: calc(100vh - 50px); }
+  .panel-label {
+    position: sticky; top: 0; z-index: 5;
+    padding: 0.5rem 1.2rem;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: center; border-bottom: 1px solid currentColor;
+  }
+  .panel-light .panel-label { background: #F7F3EA; color: #0B1F3A; border-bottom-color: rgba(11,31,58,0.15); }
+  .panel-dark  .panel-label { background: #0E1828; color: #DE7E3D; border-bottom-color: rgba(222,126,61,0.3); }
+
+  @media (max-width: 900px) {
+    .compare { grid-template-columns: 1fr; }
+    .panel { max-height: none; }
+  }
+  body.single .compare { grid-template-columns: 1fr; }
+  body.single .panel:not(.active) { display: none; }
+  body.single .panel.active { max-height: none; }
+
+  /* LIGHT THEME */
+  .light {
+    --ink: #0B1F3A; --ink-soft: #1F365B;
+    --paper: #F7F3EA; --paper-deep: #ECE5D4;
+    --copper: #C76F32; --copper-dark: #9E5523;
+    --muted: #6B6B6B; --rule: #D9D2C0;
+    --surface-contrast: #0B1F3A; --on-surface-contrast: #F7F3EA;
+    --card-bg: #fff;
+    background: var(--paper); color: #1A1A1A;
+  }
+
+  /* DARK THEME — the opt-in */
+  .dark {
+    --ink: #F0E8D6; --ink-soft: #C8C0AE;
+    --paper: #0E1828; --paper-deep: #18243B;
+    --copper: #DE7E3D; --copper-dark: #EF9152;
+    --muted: #8B97AB; --rule: #283449;
+    --surface-contrast: #050B14; --on-surface-contrast: #F7F3EA;
+    --card-bg: #18243B;
+    background: var(--paper); color: var(--ink);
+  }
+
+  /* Shared component styles */
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+  .eyebrow {
+    display: inline-block; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--copper);
+    margin-bottom: 0.5rem;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif; font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--ink); font-weight: 600; margin: 0.4rem 0 0.6rem; line-height: 1.1;
+    letter-spacing: -0.01em; font-variation-settings: 'SOFT' 30;
+  }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif; color: var(--ink); font-weight: 500;
+    font-size: 1.6rem; margin: 0 0 0.8rem; line-height: 1.2;
+  }
+  h3 { font-family: 'Fraunces', Georgia, serif; color: var(--ink); margin: 0 0 0.4rem; font-weight: 500; }
+  .lead { font-family: 'Fraunces', Georgia, serif; font-size: 1.2rem; color: var(--ink-soft); line-height: 1.4; margin-bottom: 1rem; }
+  a { color: var(--ink); text-decoration-color: var(--copper); text-underline-offset: 3px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.25rem 0; }
+  .btn {
+    font-weight: 600; padding: 0.7rem 1.3rem; border-radius: 4px;
+    border: 1.5px solid var(--surface-contrast); background: var(--surface-contrast);
+    color: var(--on-surface-contrast); text-decoration: none; cursor: pointer; font-size: 0.95rem;
+    font-family: inherit;
+  }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .btn.copper { background: var(--copper); border-color: var(--copper); color: #fff; }
+  .figure { margin: 1.5rem 0; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 1px 2px rgba(11,31,58,.06), 0 12px 32px rgba(11,31,58,.18); }
+  .figure img { width: 100%; height: auto; display: block; }
+  .dark .figure { box-shadow: 0 4px 14px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.4); }
+  .grid-2 { display: grid; gap: 1.5rem; margin: 2rem 0; }
+  @media (min-width: 700px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+  .action-plan { background: var(--paper-deep); padding: 1.5rem; border-radius: 8px; }
+  .teaser p { margin-bottom: 1em; line-height: 1.6; }
+  .teaser ul { padding-left: 1.25rem; }
+  .teaser li { margin-bottom: 0.4rem; line-height: 1.5; }
+
+  .tools-list { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .tools-list li { border-top: 1px solid var(--rule); }
+  .tools-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .tool-link { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.85rem 0;
+               text-decoration: none; color: var(--ink); }
+  .tool-arrow { color: var(--copper); font-weight: 600; }
+  .tool-label { font-family: 'Fraunces', Georgia, serif; font-size: 1.1rem; flex: 1; }
+  .tool-meta { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .assessment-section { background: var(--paper); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 2rem -24px 0; padding: 2rem 24px; }
+  .scale-note { margin: 1rem 0 1.5rem; padding: 0.75rem 1rem; background: var(--paper-deep); border-left: 3px solid var(--copper); font-size: 0.9rem; color: var(--ink-soft); border-radius: 0 4px 4px 0; }
+  .assessment-card { background: var(--card-bg); border: 1px solid var(--rule); border-radius: 4px; padding: 1.5rem; }
+  .a-q { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem; padding: 0.9rem 0; border-top: 1px solid var(--paper-deep); }
+  .a-q:first-of-type { border-top: 0; padding-top: 0; }
+  .a-q p { margin: 0; }
+  .scale { display: flex; gap: 0.5rem; }
+  .scale label { display: inline-flex; flex-direction: column; align-items: center; gap: 0.2rem; font-size: 0.82rem; color: var(--muted); padding: 0.3rem 0.4rem; border-radius: 4px; cursor: pointer; }
+  .scale label:hover { background: var(--paper-deep); }
+  .scale input { accent-color: var(--copper); }
+  .meta { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+
+  .footer { background: var(--surface-contrast); color: var(--on-surface-contrast); margin: 3rem -24px -32px; padding: 2.5rem 24px; }
+  .footer .col-title { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--copper); margin: 0 0 0.5rem; }
+  .footer a { color: var(--on-surface-contrast); }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Chapter 1 — Light (default) vs Dark (opt-in)</h1>
+  <div class="toggle-buttons">
+    <button id="btn-both" class="active">Side by side</button>
+    <button id="btn-light">Light only</button>
+    <button id="btn-dark">Dark only</button>
+  </div>
+  <div class="hint">Scroll inside either panel</div>
+</div>
+
+<div class="compare">
+
+  <section class="panel panel-light light active">
+    <div class="panel-label">Light · default</div>
+    <div class="wrap">
+      <p class="eyebrow">Chapter 1</p>
+      <h1>Stuck in the Mud with No Traction</h1>
+      <p class="lead">You can feel a capable team working harder every week while progress quietly slips. The issue isn't talent — it's the system. This chapter is the turning point.</p>
+      <div class="cta-row">
+        <a class="btn" href="#">Step Inside</a>
+        <a class="btn ghost" href="#">Take the Assessment</a>
+        <a class="btn ghost" href="#">Jump to References</a>
+      </div>
+
+      <p class="eyebrow" style="margin-top:2rem">Step Inside</p>
+      <h2>I've been there.</h2>
+      <div class="grid-2">
+        <div class="teaser">
+          <p>Watching a capable team work harder each week while progress quietly slips. Plans expand. Dependencies multiply. Confidence erodes — not because the team lacks talent, but because the system isn't supporting the work.</p>
+          <p>At the core of the <strong>Right-Sized Framework</strong> is a six-phase product development cycle:</p>
+          <ul>
+            <li><strong>Product–Market Fit</strong> — solving a real problem</li>
+            <li><strong>Plan</strong> — aligning around achievable direction</li>
+            <li><strong>Design</strong> — turning intent into solutions</li>
+            <li><strong>Build</strong> — effort into capability</li>
+          </ul>
+        </div>
+        <div class="figure"><img src="https://images.unsplash.com/photo-1542626991-cbc4e32524cc?w=600&q=70" alt="" /></div>
+      </div>
+
+      <p class="eyebrow">Action Plan</p>
+      <h2>Four moves that change the trajectory.</h2>
+      <div class="grid-2 action-plan">
+        <div>
+          <h3>Diagnose &amp; learn</h3>
+          <ol>
+            <li><strong>Take the RSF Assessment.</strong> Identify where structural constraints limit progress.</li>
+            <li><strong>Read the Book.</strong> Understand the framework end-to-end.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Deploy &amp; lead</h3>
+          <ol start="3">
+            <li><strong>Engage your team.</strong> Direct section leads to the tools.</li>
+            <li><strong>Lead deliberately.</strong> Aligned leadership sustains discipline over time.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="grid-2" style="align-items:center">
+        <div class="figure"><img src="https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=600&q=70" alt="" /></div>
+        <div>
+          <p class="eyebrow">Directed Tools &amp; Templates</p>
+          <h2>Apply the framework this week.</h2>
+          <ul class="tools-list">
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">Self-Scoring Assessment</span><span class="tool-meta">5 min</span></a></li>
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">AI-Powered Assessment</span><span class="tool-meta">Deeper</span></a></li>
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">Chapter 1 Synopsis</span><span class="tool-meta">PDF</span></a></li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="assessment-section">
+        <p class="eyebrow">Executive Self-Assessment</p>
+        <h2>Right-Sized Framework Self-Assessment</h2>
+        <div class="scale-note">1 = Never · 2 = Rarely · 3 = Sometimes · 4 = Often · 5 = Consistently — answer honestly, this is a mirror, not a report card.</div>
+        <div class="assessment-card">
+          <h3 style="margin-top:0">Section 1: Product–Market Fit</h3>
+          <div class="meta">Total possible: 35</div>
+          <div class="a-q"><p>1. Our product vision is grounded in validated customer needs.</p>
+            <div class="scale">
+              <label><input type="radio" name="l1"><span>1</span></label>
+              <label><input type="radio" name="l1"><span>2</span></label>
+              <label><input type="radio" name="l1"><span>3</span></label>
+              <label><input type="radio" name="l1"><span>4</span></label>
+              <label><input type="radio" name="l1"><span>5</span></label>
+            </div>
+          </div>
+          <div class="a-q"><p>2. We test concepts with real customers before full investment.</p>
+            <div class="scale">
+              <label><input type="radio" name="l2"><span>1</span></label>
+              <label><input type="radio" name="l2"><span>2</span></label>
+              <label><input type="radio" name="l2"><span>3</span></label>
+              <label><input type="radio" name="l2"><span>4</span></label>
+              <label><input type="radio" name="l2"><span>5</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cta-row" style="margin-top:1rem">
+          <button class="btn copper">Score Assessment</button>
+          <button class="btn ghost">Reset</button>
+        </div>
+      </section>
+
+      <div class="footer">
+        <p class="col-title">Right-Sized Framework</p>
+        <p>A practical playbook for product leaders. All author profits support <a href="#">Leading With Integrity</a>.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="panel panel-dark dark active">
+    <div class="panel-label">Dark · opt-in</div>
+    <div class="wrap">
+      <p class="eyebrow">Chapter 1</p>
+      <h1>Stuck in the Mud with No Traction</h1>
+      <p class="lead">You can feel a capable team working harder every week while progress quietly slips. The issue isn't talent — it's the system. This chapter is the turning point.</p>
+      <div class="cta-row">
+        <a class="btn" href="#">Step Inside</a>
+        <a class="btn ghost" href="#">Take the Assessment</a>
+        <a class="btn ghost" href="#">Jump to References</a>
+      </div>
+
+      <p class="eyebrow" style="margin-top:2rem">Step Inside</p>
+      <h2>I've been there.</h2>
+      <div class="grid-2">
+        <div class="teaser">
+          <p>Watching a capable team work harder each week while progress quietly slips. Plans expand. Dependencies multiply. Confidence erodes — not because the team lacks talent, but because the system isn't supporting the work.</p>
+          <p>At the core of the <strong>Right-Sized Framework</strong> is a six-phase product development cycle:</p>
+          <ul>
+            <li><strong>Product–Market Fit</strong> — solving a real problem</li>
+            <li><strong>Plan</strong> — aligning around achievable direction</li>
+            <li><strong>Design</strong> — turning intent into solutions</li>
+            <li><strong>Build</strong> — effort into capability</li>
+          </ul>
+        </div>
+        <div class="figure"><img src="https://images.unsplash.com/photo-1542626991-cbc4e32524cc?w=600&q=70" alt="" /></div>
+      </div>
+
+      <p class="eyebrow">Action Plan</p>
+      <h2>Four moves that change the trajectory.</h2>
+      <div class="grid-2 action-plan">
+        <div>
+          <h3>Diagnose &amp; learn</h3>
+          <ol>
+            <li><strong>Take the RSF Assessment.</strong> Identify where structural constraints limit progress.</li>
+            <li><strong>Read the Book.</strong> Understand the framework end-to-end.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Deploy &amp; lead</h3>
+          <ol start="3">
+            <li><strong>Engage your team.</strong> Direct section leads to the tools.</li>
+            <li><strong>Lead deliberately.</strong> Aligned leadership sustains discipline over time.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="grid-2" style="align-items:center">
+        <div class="figure"><img src="https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=600&q=70" alt="" /></div>
+        <div>
+          <p class="eyebrow">Directed Tools &amp; Templates</p>
+          <h2>Apply the framework this week.</h2>
+          <ul class="tools-list">
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">Self-Scoring Assessment</span><span class="tool-meta">5 min</span></a></li>
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">AI-Powered Assessment</span><span class="tool-meta">Deeper</span></a></li>
+            <li><a class="tool-link" href="#"><span class="tool-arrow">→</span><span class="tool-label">Chapter 1 Synopsis</span><span class="tool-meta">PDF</span></a></li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="assessment-section">
+        <p class="eyebrow">Executive Self-Assessment</p>
+        <h2>Right-Sized Framework Self-Assessment</h2>
+        <div class="scale-note">1 = Never · 2 = Rarely · 3 = Sometimes · 4 = Often · 5 = Consistently — answer honestly, this is a mirror, not a report card.</div>
+        <div class="assessment-card">
+          <h3 style="margin-top:0">Section 1: Product–Market Fit</h3>
+          <div class="meta">Total possible: 35</div>
+          <div class="a-q"><p>1. Our product vision is grounded in validated customer needs.</p>
+            <div class="scale">
+              <label><input type="radio" name="d1"><span>1</span></label>
+              <label><input type="radio" name="d1"><span>2</span></label>
+              <label><input type="radio" name="d1"><span>3</span></label>
+              <label><input type="radio" name="d1"><span>4</span></label>
+              <label><input type="radio" name="d1"><span>5</span></label>
+            </div>
+          </div>
+          <div class="a-q"><p>2. We test concepts with real customers before full investment.</p>
+            <div class="scale">
+              <label><input type="radio" name="d2"><span>1</span></label>
+              <label><input type="radio" name="d2"><span>2</span></label>
+              <label><input type="radio" name="d2"><span>3</span></label>
+              <label><input type="radio" name="d2"><span>4</span></label>
+              <label><input type="radio" name="d2"><span>5</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="cta-row" style="margin-top:1rem">
+          <button class="btn copper">Score Assessment</button>
+          <button class="btn ghost">Reset</button>
+        </div>
+      </section>
+
+      <div class="footer">
+        <p class="col-title">Right-Sized Framework</p>
+        <p>A practical playbook for product leaders. All author profits support <a href="#">Leading With Integrity</a>.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const btnBoth = document.getElementById('btn-both');
+  const btnL = document.getElementById('btn-light');
+  const btnD = document.getElementById('btn-dark');
+  const body = document.body;
+  const pL = document.querySelector('.panel-light');
+  const pD = document.querySelector('.panel-dark');
+
+  function setMode(mode) {
+    [btnBoth, btnL, btnD].forEach(b => b.classList.remove('active'));
+    if (mode === 'both') {
+      body.classList.remove('single');
+      pL.classList.add('active'); pD.classList.add('active');
+      btnBoth.classList.add('active');
+    } else if (mode === 'light') {
+      body.classList.add('single');
+      pL.classList.add('active'); pD.classList.remove('active');
+      btnL.classList.add('active');
+    } else {
+      body.classList.add('single');
+      pD.classList.add('active'); pL.classList.remove('active');
+      btnD.classList.add('active');
+    }
+  }
+  btnBoth.onclick = () => setMode('both');
+  btnL.onclick    = () => setMode('light');
+  btnD.onclick    = () => setMode('dark');
+</script>
+</body>
+</html>

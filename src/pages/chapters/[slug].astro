@@ -1,0 +1,37 @@
+---
+// src/pages/chapters/[slug].astro
+// One file → 11 chapter pages, driven by the chapter registry.
+
+import ChapterPage from '../../layouts/ChapterPage.astro';
+import { chapters, adjacentChapters } from '../../data/chapters';
+import { getChapterContent } from '../../content/chapters';
+
+export function getStaticPaths() {
+  return chapters.map(c => ({ params: { slug: c.slug } }));
+}
+
+const { slug } = Astro.params;
+const meta = chapters.find(c => c.slug === slug)!;
+const content = getChapterContent(meta.slug);
+const { prev, next } = adjacentChapters(meta.slug);
+
+const prevNav = prev ? { href: `/chapters/${prev.slug}/`, label: `Chapter ${prev.number}`, title: prev.title } : undefined;
+const nextNav = next ? { href: `/chapters/${next.slug}/`, label: `Chapter ${next.number}`, title: next.title } : undefined;
+---
+
+<ChapterPage
+  eyebrow={content.eyebrow ?? `Chapter ${meta.number}`}
+  title={content.title}
+  dek={content.dek}
+  buttons={content.buttons}
+  hero={content.hero}
+  actionPlan={content.actionPlan}
+  tools={content.tools}
+  quiz={content.quiz}
+  assessment={content.assessment}
+  references={content.references}
+  prev={prevNav}
+  next={nextNav}
+  description={content.description}
+  noindex={content.noindex}
+/>

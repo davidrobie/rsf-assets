@@ -1,0 +1,275 @@
+---
+// Quiz.astro — interactive multiple-choice quiz with per-question feedback and final assessment
+interface Choice {
+  label: string;
+  correct?: boolean;
+  feedback?: string;
+}
+interface Question {
+  question: string;
+  choices: Choice[];
+  explanation?: string; // shown after answering, regardless of choice
+}
+interface Tier {
+  min: number;           // inclusive min score
+  title: string;
+  description: string;
+}
+interface Props {
+  eyebrow?: string;
+  heading: string;
+  intro?: string;
+  image?: string;
+  imageAlt?: string;
+  quizId: string;        // unique per page for safe DOM IDs
+  questions: Question[];
+  tiers?: Tier[];        // results bands, sorted descending by min
+}
+const {
+  eyebrow = 'Quiz & Self-Assessment',
+  heading,
+  intro,
+  image,
+  imageAlt = '',
+  quizId,
+  questions,
+  tiers = [],
+} = Astro.props;
+
+// Serialize the answer key for the client without leaking the structure as obvious text.
+const answerKey = questions.map(q => ({
+  correctIndex: q.choices.findIndex(c => c.correct),
+  feedbacks: q.choices.map(c => c.feedback || ''),
+  explanation: q.explanation || '',
+}));
+---
+
+<section class="quiz section" id={`quiz-${quizId}`}>
+  <div class="container">
+    <div class="quiz-head">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+      {intro && <p class="lead">{intro}</p>}
+    </div>
+
+    {image && (
+      <figure class="quiz-figure">
+        <img src={image} alt={imageAlt} />
+      </figure>
+    )}
+
+    <form class="quiz-form" data-quiz-id={quizId} novalidate>
+      {questions.map((q, qi) => (
+        <fieldset class="q" data-q={qi}>
+          <legend><span class="q-num">Q{qi + 1}.</span> {q.question}</legend>
+          <div class="choices">
+            {q.choices.map((c, ci) => (
+              <label class="choice">
+                <input type="radio" name={`q-${quizId}-${qi}`} value={ci} />
+                <span class="choice-label">{c.label}</span>
+              </label>
+            ))}
+          </div>
+          <p class="q-feedback" hidden></p>
+        </fieldset>
+      ))}
+
+      <div class="quiz-actions">
+        <button type="submit" class="btn btn-copper">Score My Answers</button>
+        <button type="reset" class="btn btn-ghost">Reset</button>
+      </div>
+
+      <div class="quiz-result" hidden>
+        <p class="result-score"></p>
+        <div class="result-band"></div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script type="application/json" id={`quiz-data-${quizId}`} set:html={JSON.stringify({ answerKey, tiers })} />
+
+<script>
+  // Wire up every quiz on the page
+  document.querySelectorAll<HTMLFormElement>('form.quiz-form').forEach((form) => {
+    const quizId = form.dataset.quizId!;
+    const dataEl = document.getElementById(`quiz-data-${quizId}`);
+    if (!dataEl) return;
+    const { answerKey, tiers } = JSON.parse(dataEl.textContent || '{}') as {
+      answerKey: { correctIndex: number; feedbacks: string[]; explanation: string }[];
+      tiers: { min: number; title: string; description: string }[];
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      let score = 0;
+      let answered = 0;
+
+      form.querySelectorAll<HTMLFieldSetElement>('fieldset.q').forEach((fs) => {
+        const qi = Number(fs.dataset.q);
+        const checked = fs.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+        const fb = fs.querySelector<HTMLParagraphElement>('.q-feedback');
+        if (!fb) return;
+
+        // Reset visual state
+        fs.classList.remove('correct', 'incorrect', 'unanswered');
+        fb.hidden = true;
+        fb.textContent = '';
+
+        if (!checked) {
+          fs.classList.add('unanswered');
+          fb.hidden = false;
+          fb.textContent = 'No answer selected.';
+          return;
+        }
+
+        answered++;
+        const choiceIdx = Number(checked.value);
+        const key = answerKey[qi];
+        const isCorrect = choiceIdx === key.correctIndex;
+        if (isCorrect) score++;
+
+        fs.classList.add(isCorrect ? 'correct' : 'incorrect');
+        const lines: string[] = [];
+        lines.push(isCorrect ? '✓ Correct.' : '✗ Not quite.');
+        if (key.feedbacks[choiceIdx]) lines.push(key.feedbacks[choiceIdx]);
+        if (key.explanation) lines.push(key.explanation);
+        fb.hidden = false;
+        fb.textContent = lines.join('  ');
+      });
+
+      // Final score panel
+      const resultPanel = form.querySelector<HTMLDivElement>('.quiz-result');
+      const resultScore = form.querySelector<HTMLParagraphElement>('.result-score');
+      const resultBand = form.querySelector<HTMLDivElement>('.result-band');
+      if (!resultPanel || !resultScore || !resultBand) return;
+
+      resultScore.textContent = `You scored ${score} of ${answerKey.length}.`;
+      resultBand.innerHTML = '';
+
+      // Choose tier — tiers sorted descending by min in the template, but sort defensively
+      const sorted = [...tiers].sort((a, b) => b.min - a.min);
+      const tier = sorted.find(t => score >= t.min);
+      if (tier) {
+        const h = document.createElement('h4');
+        h.textContent = tier.title;
+        const p = document.createElement('p');
+        p.textContent = tier.description;
+        resultBand.appendChild(h);
+        resultBand.appendChild(p);
+      }
+      resultPanel.hidden = false;
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    form.addEventListener('reset', () => {
+      form.querySelectorAll<HTMLFieldSetElement>('fieldset.q').forEach((fs) => {
+        fs.classList.remove('correct', 'incorrect', 'unanswered');
+        const fb = fs.querySelector<HTMLParagraphElement>('.q-feedback');
+        if (fb) { fb.hidden = true; fb.textContent = ''; }
+      });
+      const result = form.querySelector<HTMLDivElement>('.quiz-result');
+      if (result) result.hidden = true;
+    });
+  });
+</script>
+
+<style>
+  .quiz {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .quiz-head { max-width: 42rem; margin-bottom: 1.5rem; }
+  .quiz-figure {
+    margin: 0 0 2rem;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    max-height: 20rem;
+  }
+  .quiz-figure img { width: 100%; height: 100%; object-fit: cover; }
+
+  .quiz-form { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  fieldset.q {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--ink);
+    background: #fff;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    margin: 0;
+  }
+  fieldset.q.correct   { border-left-color: var(--success); }
+  fieldset.q.incorrect { border-left-color: var(--error); }
+  fieldset.q.unanswered { border-left-color: var(--copper); }
+
+  legend {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    font-weight: 500;
+    color: var(--ink);
+    padding: 0;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+  }
+  .q-num {
+    color: var(--copper);
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 120ms;
+  }
+  .choice:hover { background: var(--paper-deep); }
+  .choice input { margin-top: 0.3rem; accent-color: var(--ink); }
+  .choice-label { line-height: 1.45; }
+
+  .q-feedback {
+    margin: 1rem 0 0;
+    padding: 0.7rem 0.9rem;
+    background: var(--paper-deep);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  .q.correct   .q-feedback { background: rgba(47, 125, 91, 0.10); }
+  .q.incorrect .q-feedback { background: rgba(179, 58, 58, 0.08); }
+
+  .quiz-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .quiz-result {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    background: var(--surface-contrast);
+    color: var(--on-surface-contrast);
+    border-radius: var(--radius);
+  }
+  .result-score {
+    font-family: var(--font-display);
+    font-size: var(--step-2);
+    margin: 0 0 0.5rem;
+  }
+  .result-band h4 {
+    color: var(--copper);
+    font-size: var(--step-1);
+    margin: 0 0 0.3rem;
+    font-family: var(--font-display);
+  }
+  .result-band p { margin: 0; color: rgba(247, 243, 234, 0.85); line-height: 1.5; }
+</style>

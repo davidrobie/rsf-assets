@@ -1,0 +1,121 @@
+---
+// SiteFooter.astro
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="col col-brand">
+      <p class="footer-eyebrow">Right-Sized Framework™</p>
+      <p class="footer-tag">A practical playbook for product leaders and product developers.</p>
+      <p class="footer-mission">
+        All author profits support the <a href="https://www.lwi21c.com">Leading With Integrity Non-Profit</a>.
+      </p>
+    </div>
+
+    <div class="col">
+      <p class="col-title">Step Inside</p>
+      <ul>
+        <li><a href="/chapters/chapter-1/">Ch 1 · Stuck in the Mud</a></li>
+        <li><a href="/chapters/chapter-2/">Ch 2 · Ready for This</a></li>
+        <li><a href="/chapters/chapter-3/">Ch 3 · Crafting a Vision</a></li>
+        <li><a href="/chapters/chapter-4/">More chapters →</a></li>
+      </ul>
+    </div>
+
+    <div class="col">
+      <p class="col-title">Innovation Hub</p>
+      <ul>
+        <li><a href="/hubs/vision/">Vision Hub</a></li>
+        <li><a href="/hubs/pmf/">PMF Hub</a></li>
+        <li><a href="/hubs/design/">Design Hub</a></li>
+        <li><a href="/hubs/release/">Release Hub</a></li>
+      </ul>
+    </div>
+
+    <div class="col">
+      <p class="col-title">Connect</p>
+      <ul>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/about/">About the Author</a></li>
+        <li><a href="/preorder/">Preorder the Book</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container footer-base">
+    <p>© {year} The Right Sized Framework. All rights reserved.</p>
+    <p class="footer-legal">
+      <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--surface-contrast);
+    color: var(--on-surface-contrast);
+    padding-block: 3.5rem 1.5rem;
+    margin-top: 4rem;
+  }
+  .site-footer a { color: var(--on-surface-contrast); text-decoration-color: var(--copper); }
+  .site-footer a:hover { color: var(--copper); }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 2.5rem;
+  }
+  .col-brand { max-width: 22rem; }
+  .footer-eyebrow {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin: 0 0 0.25rem;
+    color: var(--on-surface-contrast);
+  }
+  .footer-tag {
+    font-family: var(--font-display);
+    font-style: italic;
+    color: rgba(247, 243, 234, 0.75);
+    margin: 0 0 1rem;
+    line-height: 1.4;
+  }
+  .footer-mission {
+    font-size: 0.88rem;
+    color: rgba(247, 243, 234, 0.7);
+    line-height: 1.5;
+  }
+  .col-title {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--copper);
+    margin: 0 0 0.8rem;
+  }
+  .col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+  .col li { font-size: 0.92rem; }
+
+  .footer-base {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(247, 243, 234, 0.15);
+    font-size: 0.82rem;
+    color: rgba(247, 243, 234, 0.6);
+  }
+  .footer-base p { margin: 0; }
+
+  @media (max-width: 800px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 500px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .footer-base { flex-direction: column; align-items: flex-start; }
+  }
+</style>

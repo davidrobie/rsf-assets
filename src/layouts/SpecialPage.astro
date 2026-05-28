@@ -1,0 +1,41 @@
+---
+// SpecialPage.astro — slim layout for privacy, terms, contact, about, etc.
+import BaseLayout from './BaseLayout.astro';
+import PageTitle from '../components/PageTitle.astro';
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  dek?: string;
+  description?: string;
+  noindex?: boolean;
+}
+const { title, eyebrow, dek, description, noindex } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} noindex={noindex}>
+  <PageTitle eyebrow={eyebrow} title={title} dek={dek} />
+  <section class="section special-body">
+    <div class="container container-narrow prose">
+      <slot />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .special-body { padding-top: 2rem; }
+  .prose :global(h2) {
+    font-size: var(--step-2);
+    margin: 2rem 0 0.5rem;
+  }
+  .prose :global(h3) {
+    font-size: var(--step-1);
+    margin: 1.5rem 0 0.4rem;
+  }
+  .prose :global(p) { margin-bottom: 1em; line-height: 1.7; }
+  .prose :global(ul), .prose :global(ol) {
+    padding-left: 1.25rem;
+    margin-bottom: 1em;
+  }
+  .prose :global(li) { margin-bottom: 0.4rem; }
+</style>

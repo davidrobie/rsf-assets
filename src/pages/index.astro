@@ -1,0 +1,220 @@
+---
+// src/pages/index.astro — home page focused on the book
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { chapters } from '../data/chapters';
+---
+
+<BaseLayout
+  title="Right-Sized Framework — A Practical Playbook for Product Leaders"
+  description="A field-tested framework for product leaders and product developers. Vision, validation, build, test, release — without the bloat."
+>
+  <!-- Hero -->
+  <section class="home-hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">A new book by David Robie</p>
+          <h1>The Right-Sized Framework</h1>
+          <p class="lead">
+            A practical playbook for product leaders and product developers
+            who are tired of frameworks built for someone else's company.
+          </p>
+          <p class="home-sub">
+            Eleven chapters. Twelve hubs. Templates you can use on Monday.
+          </p>
+          <div class="hero-buttons">
+            <a href="/preorder/" class="btn btn-copper">Preorder the Book</a>
+            <a href="/chapters/chapter-1/" class="btn btn-ghost">Read Chapter 1 →</a>
+          </div>
+          <p class="mission-note">
+            All author profits support the <a href="https://www.lwi21c.com">Leading With Integrity</a> non-profit.
+          </p>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="book">
+            <div class="book-cover">
+              <p class="book-eyebrow">RIGHT-SIZED</p>
+              <p class="book-title">Framework</p>
+              <p class="book-rule"></p>
+              <p class="book-byline">David Robie</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chapter list -->
+  <section class="section chapters-section">
+    <div class="container">
+      <p class="eyebrow">What's Inside</p>
+      <h2>Eleven chapters from stuck to shipping.</h2>
+      <ol class="chapter-list">
+        {chapters.map(c => (
+          <li>
+            <a href={`/chapters/${c.slug}/`}>
+              <span class="ch-num">{String(c.number).padStart(2, '0')}</span>
+              <span class="ch-title">{c.title}</span>
+              <span class="ch-arrow">→</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container">
+      <h2>Get the book. Use the framework. Skip the bloat.</h2>
+      <a href="/preorder/" class="btn btn-copper">Preorder Now</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .home-hero {
+    padding-block: clamp(3rem, 8vw, 6rem);
+    background:
+      radial-gradient(ellipse at top right, rgba(199, 111, 50, 0.10), transparent 50%),
+      var(--paper);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: center;
+  }
+  h1 { margin-top: 0.4rem; font-size: clamp(2.6rem, 6vw, 4.5rem); }
+  .home-sub {
+    font-size: var(--step-0);
+    color: var(--muted);
+    margin-top: 1.2rem;
+  }
+  .hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .mission-note {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Stylized book cover (no image needed) */
+  .hero-art { display: grid; place-items: center; perspective: 1200px; }
+  .book {
+    width: clamp(220px, 30vw, 320px);
+    aspect-ratio: 2 / 3;
+    transform: rotateY(-18deg) rotateX(4deg);
+    transform-style: preserve-3d;
+    transition: transform 600ms cubic-bezier(.2,.7,.2,1);
+    filter: drop-shadow(20px 30px 40px rgba(11, 31, 58, 0.25));
+  }
+  .book:hover { transform: rotateY(-8deg) rotateX(2deg); }
+  .book-cover {
+    width: 100%;
+    height: 100%;
+    background:
+      linear-gradient(135deg, var(--surface-contrast) 0%, var(--surface-contrast-hover) 100%);
+    color: var(--on-surface-contrast);
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 2px 8px 8px 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .book-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(199, 111, 50, 0.25), transparent 40%),
+      repeating-linear-gradient(0deg, transparent 0, transparent 8px, rgba(247,243,234,0.02) 8px, rgba(247,243,234,0.02) 9px);
+    pointer-events: none;
+  }
+  .book-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    margin: 0;
+    color: var(--copper);
+    font-weight: 700;
+  }
+  .book-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1;
+    margin: 0;
+    font-variation-settings: 'SOFT' 100;
+  }
+  .book-rule {
+    width: 30%;
+    height: 2px;
+    background: var(--copper);
+    margin: 0;
+  }
+  .book-byline {
+    font-family: var(--font-display);
+    font-style: italic;
+    margin: 0;
+    color: rgba(247, 243, 234, 0.8);
+  }
+
+  .chapters-section h2 { margin: 0.3rem 0 2rem; }
+  .chapter-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: ch;
+  }
+  .chapter-list li {
+    border-top: 1px solid var(--rule);
+  }
+  .chapter-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .chapter-list a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1.5rem;
+    align-items: baseline;
+    padding: 1.25rem 0;
+    text-decoration: none;
+    color: var(--ink);
+    transition: padding 200ms, color 120ms;
+  }
+  .chapter-list a:hover { padding-left: 0.5rem; color: var(--copper-dark); }
+  .ch-num {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 100;
+    font-size: var(--step-2);
+    color: var(--copper);
+    font-weight: 600;
+  }
+  .ch-title {
+    font-family: var(--font-display);
+    font-size: var(--step-1);
+    font-weight: 500;
+  }
+  .ch-arrow { color: var(--copper); font-weight: 600; }
+
+  .cta {
+    background: var(--surface-contrast);
+    color: var(--on-surface-contrast);
+    padding-block: 4rem;
+    text-align: center;
+  }
+  .cta h2 { color: var(--on-surface-contrast); margin: 0 0 1.5rem; max-width: 38rem; margin-inline: auto; }
+
+  @media (max-width: 800px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-art { order: -1; margin-bottom: 1rem; }
+    .chapter-list a { grid-template-columns: auto 1fr; }
+    .ch-arrow { display: none; }
+  }
+</style>

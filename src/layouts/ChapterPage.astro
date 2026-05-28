@@ -1,0 +1,132 @@
+---
+// ChapterPage.astro — the universal chapter/hub page template.
+// Drives every component from a single frontmatter blob, so adding a new
+// chapter or hub is just dropping a markdown file in src/content/.
+import BaseLayout from './BaseLayout.astro';
+import PageTitle from '../components/PageTitle.astro';
+import ButtonRow from '../components/ButtonRow.astro';
+import Hero from '../components/Hero.astro';
+import ActionPlan from '../components/ActionPlan.astro';
+import ToolsTemplates from '../components/ToolsTemplates.astro';
+import Quiz from '../components/Quiz.astro';
+import Assessment from '../components/Assessment.astro';
+import References from '../components/References.astro';
+import ChapterNav from '../components/ChapterNav.astro';
+
+interface NavItem { href: string; label: string; title: string; }
+
+interface Props {
+  // Title section
+  eyebrow?: string;
+  title: string;
+  dek?: string;
+
+  // Buttons under title
+  buttons?: { label: string; href: string; variant?: 'primary' | 'ghost' | 'copper'; newTab?: boolean }[];
+
+  // Hero / Step Inside
+  hero: { eyebrow?: string; heading: string; body?: string; image?: string; imageAlt?: string };
+
+  // Action Plan
+  actionPlan: {
+    eyebrow?: string;
+    heading: string;
+    columnLeftTitle?: string;
+    columnRightTitle?: string;
+    columnLeft?: string;
+    columnRight?: string;
+    image?: string;
+    imageAlt?: string;
+    imagePosition?: 'top' | 'between' | 'bottom';
+  };
+
+  // Tools & Templates
+  tools: {
+    eyebrow?: string;
+    heading: string;
+    body?: string;
+    image?: string;
+    imageAlt?: string;
+    tools?: { label: string; href: string; meta?: string }[];
+  };
+
+  // Quiz (optional)
+  quiz?: {
+    eyebrow?: string;
+    heading: string;
+    intro?: string;
+    image?: string;
+    imageAlt?: string;
+    quizId: string;
+    questions: {
+      question: string;
+      choices: { label: string; correct?: boolean; feedback?: string }[];
+      explanation?: string;
+    }[];
+    tiers?: { min: number; title: string; description: string }[];
+  };
+
+  // Likert assessment (optional)
+  assessment?: {
+    assessmentId: string;
+    eyebrow?: string;
+    heading: string;
+    intro?: string;
+    scaleNote?: string;
+    externalUrl?: string;
+    image?: string;
+    imageAlt?: string;
+    sections: {
+      title: string;
+      shortTitle?: string;
+      max: number;
+      bands: { min: number; max: number; label: string; text: string }[];
+      questions: string[];
+    }[];
+  };
+
+  // References
+  references?: {
+    title: string;
+    authors?: string;
+    source?: string;
+    url?: string;
+    type?: 'book' | 'article' | 'video' | 'tool' | 'other';
+  }[];
+
+  // Prev / next
+  prev?: NavItem;
+  next?: NavItem;
+
+  // <head>
+  description?: string;
+  noindex?: boolean;
+}
+
+const {
+  eyebrow, title, dek, buttons,
+  hero, actionPlan, tools, quiz, assessment, references,
+  prev, next,
+  description, noindex,
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description} noindex={noindex}>
+  <PageTitle eyebrow={eyebrow} title={title} dek={dek} />
+
+  {buttons && buttons.length > 0 && <ButtonRow buttons={buttons} />}
+
+  <Hero {...hero} />
+
+  <ActionPlan {...actionPlan} />
+
+  <ToolsTemplates {...tools} />
+
+  {quiz && <Quiz {...quiz} />}
+
+  {assessment && <Assessment {...assessment} />}
+
+  {references && references.length > 0 && <References references={references} />}
+
+  {(prev || next) && <ChapterNav prev={prev} next={next} />}
+</BaseLayout>
